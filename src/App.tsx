@@ -1,7 +1,7 @@
-import { SetStateAction, useEffect, useRef, useState } from 'react'
+import { JSX, SetStateAction, useEffect, useRef, useState } from 'react'
 import './App.scss'
 
-const knb: Record<string, JSX.element> = {
+const knb: Record<string, JSX.Element> = {
   'k': <img src="k.png" alt="k" style={{ width: 75 }} />,
   'n': <img src="n.png" alt="n" style={{ width: 75 }} />,
   'b': <img src="b.png" alt="b" style={{ width: 75 }} />
@@ -37,13 +37,13 @@ function App() {
   const [botChoice, setBotChoice] = useState<string | undefined>()
   const [result, setResult] = useState<string | undefined>()
   const resultRef = useRef<HTMLHeadingElement | null>(null)
-  const [countGame, setCountGame] = useState<number>(localStorage.getItem('countGame'))
-  const [winCount, setWinCount] = useState<number>(localStorage.getItem('winCount'))
-  const [loseCount, setLoseCount] = useState<number>(localStorage.getItem('loseCount'))
-  const [drawCount, setDrawCount] = useState<number>(localStorage.getItem('drawCount'))
+  const [countGame, setCountGame] = useState<number>(Number(localStorage.getItem('countGame')) || 0)
+  const [winCount, setWinCount] = useState<number>(Number(localStorage.getItem('winCount')) || 0)
+  const [loseCount, setLoseCount] = useState<number>(Number(localStorage.getItem('loseCount')) || 0)
+  const [drawCount, setDrawCount] = useState<number>(Number(localStorage.getItem('drawCount')) || 0)
 
   const handleStartGame = (choice: SetStateAction<string | undefined>) => {
-    setCountGame((count) => ++count)
+    setCountGame((count) => count + 1)
     setUserChoice(choice)
     setBotChoice(knbK[Math.floor(Math.random() * 3)])
   }
@@ -57,19 +57,26 @@ function App() {
   }, [countGame, winCount, loseCount, drawCount])
 
   useEffect(() => {
-    const choiceToStr = `${userChoice}${botChoice}`
-    setResult(WinLoseDraw[choiceToStr])
-    resultRef.current.className = 'result'
-    resultRef.current.classList.add(WLDClasses[choiceToStr])
-    switch (result) {
-      case 'You Win':
-        return setWinCount((count) => ++count)
-      case 'You Lose':
-        return setLoseCount((count) => ++count)
-      case 'Draw':
-        return setDrawCount((count) => ++count)
+    if (userChoice && botChoice) {
+      const choiceToStr = `${userChoice}${botChoice}`
+      setResult(WinLoseDraw[choiceToStr])
+      if (resultRef.current) {
+        resultRef.current.className = 'result'
+        resultRef.current.classList.add(WLDClasses[choiceToStr])
+      }
+      switch (WinLoseDraw[choiceToStr]) {
+        case 'You Win':
+          setWinCount((count) => count + 1)
+          break
+        case 'You Lose':
+          setLoseCount((count) => count + 1)
+          break
+        case 'Draw':
+          setDrawCount((count) => count + 1)
+          break
+      }
     }
-  }, [userChoice])
+  }, [userChoice, botChoice])
 
   const handleRestart = () => {
     setUserChoice(undefined)
@@ -83,25 +90,23 @@ function App() {
       <h4>Сыграно игр: {countGame} | Выйграно: {winCount} | Проиграно: {loseCount} | Ничья: {drawCount}</h4>
       <h3>Выбор противника</h3>
       <div className="choice">
-        {userChoice &&
-          <>{knb[botChoice]}</>
-        }
+        {userChoice && <>{knb[`${botChoice}`]}</>}
       </div>
       <h3>Ваш выбор</h3>
-      {userChoice ?
+      {userChoice ? (
         <>
           <div>{knb[userChoice]}</div>
           <div className="restart_container">
             <button className='restart' onClick={handleRestart}>Restart</button>
           </div>
         </>
-        :
+      ) : (
         <div className="choice">
           <img src="k.png" alt="" style={{ width: 75 }} onClick={() => handleStartGame('k')} />
           <img src="n.png" alt="" style={{ width: 75 }} onClick={() => handleStartGame('n')} />
           <img src="b.png" alt="" style={{ width: 75 }} onClick={() => handleStartGame('b')} />
         </div>
-      }
+      )}
     </main>
   )
 }
